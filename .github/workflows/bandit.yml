@@ -1,0 +1,36 @@
+name: Bandit Security Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  bandit:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Bandit
+        run: pip install bandit[sarif]
+
+      - name: Run Bandit scan
+        run: bandit -r . -f sarif -o bandit-results.sarif --exit-zero
+        continue-on-error: true
+
+      - name: Upload Bandit results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: bandit-results.sarif
